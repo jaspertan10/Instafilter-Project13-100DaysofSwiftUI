@@ -24,7 +24,6 @@ struct ContentView: View {
 struct SandboxView: View {
     
     @State private var image: Image?
-    
     @State private var settingScale: Float = 1
 
     
@@ -58,14 +57,23 @@ struct SandboxView: View {
         
         //Create a Core Image context and a Core Image filter.
         let context = CIContext()
-        let currentFilter = CIFilter.pixellate()
+        let currentFilter = CIFilter.crystallize()
 
         //Customize the filter:
         //  inputImage - image we want to change
         currentFilter.inputImage = beginImage
         
+        //Dynamically setting intensity of the filter settings
+        let amount = 1.0
+
+        let inputKeys = currentFilter.inputKeys
+        
+        if inputKeys.contains(kCIInputIntensityKey) { currentFilter.setValue(amount, forKey: kCIInputIntensityKey) }
+        if inputKeys.contains(kCIInputRadiusKey) { currentFilter.setValue(amount * 200, forKey: kCIInputRadiusKey) }
+        if inputKeys.contains(kCIInputScaleKey) { currentFilter.setValue(amount * 10, forKey: kCIInputScaleKey) }
+    
         //  intensity - how strongly the sepia effect should be applied (range of 0...1, in decimals)
-        currentFilter.scale = settingScale
+        //currentFilter.scale = settingScale
         
         
         //Now we need to convert the output from our filter to a SwiftUI Image that we can display in our view.
