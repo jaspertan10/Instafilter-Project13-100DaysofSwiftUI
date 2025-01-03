@@ -11,7 +11,14 @@ import SwiftUI
 struct InstafilterApp: App {
     var body: some Scene {
         WindowGroup {
+            
             ContentView()
+            
+//            SandboxView()
+//                .onAppear {
+//                    print("In SandboxView")
+//                }
+            
         }
     }
 }
