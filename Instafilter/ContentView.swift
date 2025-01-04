@@ -34,7 +34,7 @@ struct SandboxView: View {
                 .resizable()
                 .scaledToFit()
             
-            Slider(value: $settingScale, in: 0...100)
+            Slider(value: $settingScale, in: 0...1)
                 .onChange(of: settingScale) { oldValue, newValue in
                     loadImage()
                 }
@@ -64,7 +64,7 @@ struct SandboxView: View {
         currentFilter.inputImage = beginImage
         
         //Dynamically setting intensity of the filter settings
-        let amount = 1.0
+        let amount = settingScale
 
         let inputKeys = currentFilter.inputKeys
         
