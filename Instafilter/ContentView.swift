@@ -7,7 +7,10 @@
 
 import CoreImage
 import CoreImage.CIFilterBuiltins
+import PhotosUI
 import SwiftUI
+
+
 
 struct ContentView: View {
     var body: some View {
@@ -20,6 +23,49 @@ struct ContentView: View {
         .padding()
     }
 }
+
+#Preview {
+    secondSandboxView()
+}
+
+struct secondSandboxView: View {
+    
+    // Stores item (photo) that is selected
+    @State private var pickerItem: PhotosPickerItem?
+    
+    // Stores selected item (photo) as a SwiftUI image.
+    @State private var selectedImage: Image?
+    
+
+    var body: some View {
+        VStack {
+            //Select a photo from phone photo library
+            PhotosPicker("Select a picture", selection: $pickerItem, matching: .images)
+            
+            selectedImage?
+                .resizable()
+                .scaledToFit()
+        }
+        .onChange(of: pickerItem) { // watch picker item for changes. Changes indicates User has selected a picture to load.
+            Task {
+                // Call load transferable when picture selected, this method tells SwiftUI we want to load the data from the picker item into a SwiftUI Image
+                selectedImage = try await pickerItem?.loadTransferable(type: Image.self)
+            }
+        }
+    }
+}
+
+/*
+ 
+    - PhotosPicker view allows us to import one or more photos from the user's photo library
+    - Data (photos) are provided to us as a special type called PhotosPickerItem
+        - This is loaded asynchronously to prevent performance hiccups.
+        - This data is then converted into a SwiftUI image.
+ 
+ 
+ 
+ */
+
 
 struct SandboxView: View {
     
@@ -104,14 +150,10 @@ struct SandboxView: View {
     }
 }
 
-#Preview {
-    SandboxView()
-}
 
 
-
-/*
- 
+/*  SandboxView: Core Image, How to alter add filters to an image.
+    
  - Image view is a great end point, but it's not great if you want to create images dynamically, apply Core Image filters, etc.
  
  - There are a total of 4 image types:
