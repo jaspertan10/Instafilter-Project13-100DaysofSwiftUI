@@ -13,43 +13,142 @@ import SwiftUI
 
 
 struct ContentView: View {
+    
+    @State private var processedImage: Image?
+    @State private var filterIntensity = 0.5
+    
+    @State private var selectedItem: PhotosPickerItem?
+    
+    @State private var currentFilter = CIFilter.sepiaTone()
+    let context = CIContext()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        
+        NavigationStack {
+            VStack {
+                Spacer()
+                
+                PhotosPicker(selection: $selectedItem) {
+                    if let processedImage {
+                        processedImage
+                            .resizable()
+                            .scaledToFit()
+                    }
+                    else {
+                        ContentUnavailableView("No Picture", systemImage: "photo.badge.plus", description: Text("Tap to import a photo"))
+                    }
+                }
+                //.buttonStyle(.plain) makes the button grey instead of blue colored
+                .onChange(of: selectedItem) {
+                    loadImage()
+                }
+                
+                Spacer()
+                
+                HStack {
+                    Text("Intensity")
+                    
+                    Slider(value: $filterIntensity)
+                        .onChange(of: filterIntensity) { oldValue, newValue in
+                            applyProcessing()
+                        }
+                }
+                .padding(.vertical)
+                
+                HStack {
+                    Button("Change filter") {
+                        changeFilter()
+                    }
+                }
+                
+                Spacer()
+            }
+            .navigationTitle("Instafilter")
+            .padding([.horizontal, .bottom])
         }
-        .padding()
+    }
+    
+    func changeFilter() {
+        
+    }
+    
+    func loadImage() {
+        Task {
+            guard let imageData = try await selectedItem?.loadTransferable(type: Data.self) else {
+                return
+            }
+            
+            guard let inputImage = UIImage(data: imageData) else {
+                return
+            }
+            
+            let beginImage = CIImage(image: inputImage)
+            
+            currentFilter.setValue(beginImage, forKey: kCIInputImageKey)
+            applyProcessing()
+        }
+    }
+    
+    func applyProcessing() {
+        currentFilter.intensity = Float(filterIntensity)
+        
+        guard let outputImage = currentFilter.outputImage else {
+            return
+        }
+        
+        guard let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
+            return
+        }
+        
+        let uiImage = UIImage(cgImage: cgImage)
+        processedImage = Image(uiImage: uiImage)
     }
 }
 
 #Preview {
-    secondSandboxView()
+    ContentView()
 }
 
 struct secondSandboxView: View {
     
     // Stores item (photo) that is selected
-    @State private var pickerItem: PhotosPickerItem?
+    //@State private var pickerItem: PhotosPickerItem?
+    // Below allows us to store multiple items (photos)
+    @State private var pickerItems = [PhotosPickerItem]()
     
-    // Stores selected item (photo) as a SwiftUI image.
-    @State private var selectedImage: Image?
+    // Stores a single selected item (photo) as a SwiftUI image.
+    //@State private var selectedImage: Image?
+    //Below allows us to store multiple items (photos) as SwiftUI images.
+    @State private var selectedImages = [Image]()
     
 
     var body: some View {
-        VStack {
-            //Select a photo from phone photo library
-            PhotosPicker("Select a picture", selection: $pickerItem, matching: .images)
+        ScrollView {
             
-            selectedImage?
-                .resizable()
-                .scaledToFit()
+            PhotosPicker(selection: $pickerItems, maxSelectionCount: 3, matching: .images) {
+                Label("Select a picture", systemImage: "photo")
+            }
+
+            
+            ForEach(0..<selectedImages.count, id: \.self) { i in
+                selectedImages[i]
+                    .resizable()
+                    .scaledToFit()
+            }
         }
-        .onChange(of: pickerItem) { // watch picker item for changes. Changes indicates User has selected a picture to load.
+        .onChange(of: pickerItems) { // watch picker item for changes. Changes indicates User has selected a picture to load.
             Task {
                 // Call load transferable when picture selected, this method tells SwiftUI we want to load the data from the picker item into a SwiftUI Image
-                selectedImage = try await pickerItem?.loadTransferable(type: Image.self)
+                //selectedImage = try await pickerItem?.loadTransferable(type: Image.self)
+                
+                //clear array so that when new items are selected, old items are removed.
+                selectedImages.removeAll()
+                
+                for item in pickerItems {
+                    if let loadedImage = try await item.loadTransferable(type: Image.self) {
+                        selectedImages.append(loadedImage)
+                    }
+                }
             }
         }
     }
@@ -62,6 +161,7 @@ struct secondSandboxView: View {
         - This is loaded asynchronously to prevent performance hiccups.
         - This data is then converted into a SwiftUI image.
  
+    - PhotosPicker can be changed to be an array of PhotosPickerItems, which allows the user to select several photos.
  
  
  */
