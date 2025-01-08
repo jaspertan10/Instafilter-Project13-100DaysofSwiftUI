@@ -32,6 +32,8 @@ struct ContentView: View {
     
     @State private var filterChangesBeforeReviewRequest = 3
     
+    @State private var inputKeys = [String]()
+    
     private var imageNotSelected: Bool {
         if processedImage == nil {
             return true
@@ -69,6 +71,7 @@ struct ContentView: View {
                             .onChange(of: filterIntensity) {
                                 applyProcessing()
                             }
+                            .disabled(!inputKeys.contains(kCIInputIntensityKey))
                     }
                     
                     HStack {
@@ -77,6 +80,7 @@ struct ContentView: View {
                             .onChange(of: filterRadius) {
                                 applyProcessing()
                             }
+                            .disabled(!inputKeys.contains(kCIInputRadiusKey))
                     }
                     
                     HStack {
@@ -85,6 +89,7 @@ struct ContentView: View {
                             .onChange(of: filterScale) {
                                 applyProcessing()
                             }
+                            .disabled(!inputKeys.contains(kCIInputScaleKey))
                     }
                     
                 }
@@ -115,6 +120,8 @@ struct ContentView: View {
                 Button("Sepia Tone") { setFilter(CIFilter.sepiaTone()) }
                 Button("Unsharp Mask") { setFilter(CIFilter.unsharpMask()) }
                 Button("Vignette") { setFilter(CIFilter.vignette()) }
+                Button("Thermal") { setFilter(CIFilter.thermal()) }
+                Button("Vibrance") { setFilter(CIFilter.vibrance()) }
                 Button("Cancel", role: .cancel) { }
             })
             .padding([.horizontal, .bottom])
@@ -144,7 +151,7 @@ struct ContentView: View {
     
     func applyProcessing() {
         
-        let inputKeys = currentFilter.inputKeys
+        inputKeys = currentFilter.inputKeys
 
         if inputKeys.contains(kCIInputIntensityKey)
         {
