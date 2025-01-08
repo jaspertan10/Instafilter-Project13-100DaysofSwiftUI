@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var filterIntensity = 0.5
     @State private var filterRadius = 0.5
     @State private var filterScale = 0.5
+    @State private var filterAmount = 0.5
+    @State private var filterEV = 0.5
     
     @State private var selectedItem: PhotosPickerItem?
     
@@ -71,8 +73,8 @@ struct ContentView: View {
                             .onChange(of: filterIntensity) {
                                 applyProcessing()
                             }
-                            .disabled(!inputKeys.contains(kCIInputIntensityKey))
                     }
+                    .disabled(!inputKeys.contains(kCIInputIntensityKey))
                     
                     HStack {
                         Text("Radius")
@@ -80,8 +82,8 @@ struct ContentView: View {
                             .onChange(of: filterRadius) {
                                 applyProcessing()
                             }
-                            .disabled(!inputKeys.contains(kCIInputRadiusKey))
                     }
+                    .disabled(!inputKeys.contains(kCIInputRadiusKey))
                     
                     HStack {
                         Text("Scale")
@@ -89,9 +91,28 @@ struct ContentView: View {
                             .onChange(of: filterScale) {
                                 applyProcessing()
                             }
-                            .disabled(!inputKeys.contains(kCIInputScaleKey))
                     }
+                    .disabled(!inputKeys.contains(kCIInputScaleKey))
                     
+                    
+                    HStack {
+                        Text("Amount")
+                        Slider(value: $filterAmount)
+                            .onChange(of: filterAmount) {
+                                applyProcessing()
+                            }
+                    }
+                    .disabled(!inputKeys.contains(kCIInputAmountKey))
+        
+                    
+                    HStack {
+                        Text("EV")
+                        Slider(value: $filterEV)
+                            .onChange(of: filterEV) {
+                                applyProcessing()
+                            }
+                    }
+                    .disabled(!inputKeys.contains(kCIInputEVKey))
                 }
                 .disabled(imageNotSelected)
                 .padding(.vertical)
@@ -122,6 +143,7 @@ struct ContentView: View {
                 Button("Vignette") { setFilter(CIFilter.vignette()) }
                 Button("Thermal") { setFilter(CIFilter.thermal()) }
                 Button("Vibrance") { setFilter(CIFilter.vibrance()) }
+                Button("Exposure") { setFilter(CIFilter.exposureAdjust()) }
                 Button("Cancel", role: .cancel) { }
             })
             .padding([.horizontal, .bottom])
@@ -164,6 +186,14 @@ struct ContentView: View {
         if inputKeys.contains(kCIInputScaleKey)
         {
             currentFilter.setValue(filterScale * 10, forKey: kCIInputScaleKey)
+        }
+        if inputKeys.contains(kCIInputAmountKey)
+        {
+            currentFilter.setValue(filterAmount * 5, forKey: kCIInputAmountKey)
+        }
+        if inputKeys.contains(kCIInputEVKey)
+        {
+            currentFilter.setValue(filterEV * 5, forKey: kCIInputEVKey)
         }
         
         guard let outputImage = currentFilter.outputImage else {
