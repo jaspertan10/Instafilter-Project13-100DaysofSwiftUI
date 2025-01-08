@@ -11,13 +11,15 @@ import PhotosUI
 import SwiftUI
 import StoreKit
 
-var filterChangesBeforeReviewRequest = 3
-
 
 struct ContentView: View {
     
     @State private var processedImage: Image?
+    
+    //Filter settings
     @State private var filterIntensity = 0.5
+    @State private var filterRadius = 0.5
+    @State private var filterScale = 0.5
     
     @State private var selectedItem: PhotosPickerItem?
     
@@ -27,6 +29,15 @@ struct ContentView: View {
 
     @AppStorage("filterCount") var filterCount = 0
     @Environment(\.requestReview) var requestReview
+    
+    @State private var filterChangesBeforeReviewRequest = 3
+    
+    private var imageNotSelected: Bool {
+        if processedImage == nil {
+            return true
+        }
+        return false
+    }
     
     var body: some View {
         
@@ -51,20 +62,42 @@ struct ContentView: View {
                 
                 Spacer()
                 
-                HStack {
-                    Text("Intensity")
+                VStack {
+                    HStack {
+                        Text("Intensity")
+                        Slider(value: $filterIntensity)
+                            .onChange(of: filterIntensity) {
+                                applyProcessing()
+                            }
+                    }
                     
-                    Slider(value: $filterIntensity)
-                        .onChange(of: filterIntensity) { oldValue, newValue in
-                            applyProcessing()
-                        }
+                    HStack {
+                        Text("Radius")
+                        Slider(value: $filterRadius)
+                            .onChange(of: filterRadius) {
+                                applyProcessing()
+                            }
+                    }
+                    
+                    HStack {
+                        Text("Scale")
+                        Slider(value: $filterScale)
+                            .onChange(of: filterScale) {
+                                applyProcessing()
+                            }
+                    }
+                    
                 }
+                .disabled(imageNotSelected)
                 .padding(.vertical)
                 
                 HStack {
                     Button("Change filter") {
                         changeFilter()
                     }
+                    .disabled(imageNotSelected)
+                    
+                    Spacer()
                     
                     if let processedImage {
                         ShareLink(item: processedImage, preview: SharePreview("Filter Image", image: processedImage))
@@ -119,11 +152,11 @@ struct ContentView: View {
         }
         if inputKeys.contains(kCIInputRadiusKey)
         {
-            currentFilter.setValue(filterIntensity * 200, forKey: kCIInputRadiusKey)
+            currentFilter.setValue(filterRadius * 200, forKey: kCIInputRadiusKey)
         }
         if inputKeys.contains(kCIInputScaleKey)
         {
-            currentFilter.setValue(filterIntensity * 10, forKey: kCIInputScaleKey)
+            currentFilter.setValue(filterScale * 10, forKey: kCIInputScaleKey)
         }
         
         guard let outputImage = currentFilter.outputImage else {
@@ -144,8 +177,9 @@ struct ContentView: View {
         
         filterCount += 1
         
-        if filterCount >= filterChangesBeforeReviewRequest {
+        if filterCount >= 3 {
             requestReview()
+            filterChangesBeforeReviewRequest = 10
         }
     }
 }
